@@ -1,0 +1,2 @@
+# tabelaperidodikeprofesionale
+Tabele Periodike Profesionale
