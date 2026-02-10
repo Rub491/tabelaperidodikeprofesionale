@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabela Periodike - 118 Elementet (Me Oksidimin & Elektronegativitetin)</title>
+    <style>
+        :root { --bg: #0b0f19; --card: #161e2d; --text: #ffffff; --accent: #00d2ff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 10px; margin: 0; }
+        h1 { text-align: center; color: var(--accent); text-transform: uppercase; font-size: 22px; }
+        
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 3px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .element {
+            aspect-ratio: 1/1;
+            background: var(--card);
+            border: 1px solid #2d3748;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 3px;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .element:hover { transform: scale(1.5); z-index: 100; border-color: white; box-shadow: 0 0 15px var(--accent); }
+        .n { position: absolute; top: 1px; left: 3px; font-size: 8px; color: #94a3b8; }
+        .s { font-size: 14px; font-weight: bold; }
+        .e { font-size: 6px; text-align: center; opacity: 0.8; }
+
+        /* Grupet */
+        .jometal { background: #065f46; } .alkaline { background: #991b1b; } 
+        .alkalino-tokesore { background: #9a3412; } .kalimtare { background: #1e3a8a; }
+        .metaloid { background: #854d0e; } .halogjen { background: #831843; }
+        .fisnike { background: #4c1d95; } .pas-kalimtare { background: #334155; }
+        .lantanid { background: #701a75; } .aktinid { background: #4c0519; }
+
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; }
+        #info-box {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #1e293b; border: 2px solid var(--accent); width: 380px; padding: 25px; border-radius: 12px; z-index: 1001;
+        }
+        .data-row { display: flex; justify-content: space-between; margin: 8px 0; border-bottom: 1px solid #2d3748; padding-bottom: 4px; }
+        .desc { margin-top: 15px; font-size: 14px; color: #cbd5e1; line-height: 1.4; }
+        .close-btn { width: 100%; background: #ef4444; color: white; border: none; padding: 10px; margin-top: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h1>Tabela Periodike Profesionale</h1>
+<div class="periodic-table" id="pt"></div>
+
+<div id="overlay" onclick="closeBox()"></div>
+<div id="info-box">
+    <h2 id="m-name" style="margin:0 0 15px 0; color:var(--accent); text-align: center;"></h2>
+    <div class="data-row"><span>Simboli:</span> <b id="m-sym"></b></div>
+    <div class="data-row"><span>Masa Atomike:</span> <b id="m-mass"></b></div>
+    <div class="data-row"><span>Nr. Oksidimit:</span> <b id="m-ox" style="color: #fbbf24;"></b></div>
+    <div class="data-row"><span>Elektronegativiteti:</span> <b id="m-en" style="color: #4ade80;"></b></div>
+    <div id="m-desc" class="desc"></div>
+    <button class="close-btn" onclick="closeBox()">MBYLL</button>
+</div>
+
+<script>
+const elements = [
+    {n:1, s:"H", e:"Hidrogjen", m:"1.008", ox:"+1, -1", en:"2.20", c:1, r:1, cat:"jometal", d:"Elementi më i lehtë, baza e yjeve dhe ujit."},
+    {n:2, s:"He", e:"Helium", m:"4.002", ox:"0", en:"-", c:18, r:1, cat:"fisnike", d:"Gaz i plirtë, i dyti më i bollshëm në univers."},
+    {n:3, s:"Li", e:"Litium", m:"6.94", ox:"+1", en:"0.98", c:1, r:2, cat:"alkaline", d:"Metal i butë, thelbësor për bateritë e rikarikueshme."},
+    {n:4, s:"Be", e:"Berilium", m:"9.012", ox:"+2", en:"1.57", c:2, r:2, cat:"alkalino-tokesore", d:"Metal toksik por shumë i fortë dhe i lehtë."},
+    {n:5, s:"B", e:"Bor", m:"10.81", ox:"+3", en:"2.04", c:13, r:2, cat:"metaloid", d:"Përdoret në qelq borosilikat dhe si gjysmëpërcjellës."},
+    {n:6, s:"C", e:"Karbon", m:"12.01", ox:"+4, +2, -4", en:"2.55", c:14, r:2, cat:"jometal", d:"Baza e kimisë organike dhe të gjithë jetës në Tokë."},
+    {n:7, s:"N", e:"Azot", m:"14.01", ox:"+5, +4, +3, +2, +1, -3", en:"3.04", c:15, r:2, cat:"jometal", d:"Gaz pa ngjyrë që përbën shumicën e ajrit."},
+    {n:8, s:"O", e:"Oksigjen", m:"15.99", ox:"-2", en:"3.44", c:16, r:2, cat:"jometal", d:"I nevojshëm për oksidimin dhe frymëmarrjen e qelizave."},
+    {n:9, s:"F", e:"Fluor", m:"18.99", ox:"-1", en:"3.98", c:17, r:2, cat:"halogjen", d:"Elementi me elektronegativitetin më të lartë."},
+    {n:10, s:"Ne", e:"Neon", m:"20.18", ox:"0", en:"-", c:18, r:2, cat:"fisnike", d:"Përdoret në dritat e reklamave për shkak të shkëlqimit."},
+    {n:11, s:"Na", e:"Natrium", m:"22.99", ox:"+1", en:"0.93", c:1, r:3, cat:"alkaline", d:"Metal shumë reaktiv, gjendet bollshëm në kripën e detit."},
+    {n:12, s:"Mg", e:"Magnez", m:"24.31", ox:"+2", en:"1.31", c:2, r:3, cat:"alkalino-tokesore", d:"Metal i rëndësishëm për klorofilin e bimëve."},
+    {n:13, s:"Al", e:"Alumin", m:"26.98", ox:"+3", en:"1.61", c:13, r:3, cat:"pas-kalimtare", d:"Metal i lehtë dhe shumë i përdorshëm në industri."},
+    {n:14, s:"Si", e:"Silic", m:"28.09", ox:"+4, -4", en:"1.90", c:14, r:3, cat:"metaloid", d:"Gjysmëpërcjellësi bazë i revolucionit teknologjik."},
+    {n:15, s:"P", e:"Fosfor", m:"30.97", ox:"+5, +3, -3", en:"2.19", c:15, r:3, cat:"jometal", d:"I domosdoshëm për transferimin e energjisë (ATP)."},
+    {n:16, s:"S", e:"Squfur", m:"32.06", ox:"+6, +4, -2", en:"2.58", c:16, r:3, cat:"jometal", d:"Kristal i verdhë që gjendet në vullkane dhe proteina."},
+    {n:17, s:"Cl", e:"Klor", m:"35.45", ox:"+7, +5, +1, -1", en:"3.16", c:17, r:3, cat:"halogjen", d:"Gaz i verdhë-gjelbër që përdoret si dezinfektues."},
+    {n:18, s:"Ar", e:"Argon", m:"39.95", ox:"0", en:"-", c:18, r:3, cat:"fisnike", d:"Gaz inert që mbron filamentet e llambave."},
+    {n:19, s:"K", e:"Kalium", m:"39.10", ox:"+1", en:"0.82", c:1, r:4, cat:"alkaline", d:"Mineral kritik për funksionin nervor dhe muskulor."},
+    {n:20, s:"Ca", e:"Kalcium", m:"40.08", ox:"+2", en:"1.00", c:2, r:4, cat:"alkalino-tokesore", d:"Përbërësi kryesor i kockave dhe dhëmbëve."},
+    {n:21, s:"Sc", e:"Skandium", m:"44.96", ox:"+3", en:"1.36", c:3, r:4, cat:"kalimtare", d:"Përdoret në lidhjet e forta të aluminit."},
+    {n:22, s:"Ti", e:"Titan", m:"47.87", ox:"+4", en:"1.54", c:4, r:4, cat:"kalimtare", d:"I fortë si çeliku por 45% më i lehtë."},
+    {n:23, s:"V", e:"Vanadium", m:"50.94", ox:"+5, +4", en:"1.63", c:5, r:4, cat:"kalimtare", d:"Përdoret për të prodhuar çelik rezistent."},
+    {n:24, s:"Cr", e:"Krom", m:"52.00", ox:"+3, +6", en:"1.66", c:6, r:4, cat:"kalimtare", d:"I jep çelikut rezistencën ndaj ndryshkut."},
+    {n:25, s:"Mn", e:"Mangan", m:"54.94", ox:"+2, +4, +7", en:"1.55", c:7, r:4, cat:"kalimtare", d:"Përdoret për prodhimin e çelikut dhe bateritë."},
+    {n:26, s:"Fe", e:"Hekur", m:"55.85", ox:"+2, +3", en:"1.83", c:8, r:4, cat:"kalimtare", d:"Metali më i rëndësishëm për ndërtimin dhe transportin."},
+    {n:27, s:"Co", e:"Kobalt", m:"58.93", ox:"+2, +3", en:"1.88", c:9, r:4, cat:"kalimtare", d:"Përdoret në turbina dhe për ngjyrën blu në qelq."},
+    {n:28, s:"Ni", e:"Nikel", m:"58.69", ox:"+2, +3", en:"1.91", c:10, r:4, cat:"kalimtare", d:"Rezistent ndaj korrozionit, përdoret në monedha."},
+    {n:29, s:"Cu", e:"Bakër", m:"63.55", ox:"+2, +1", en:"1.90", c:11, r:4, cat:"kalimtare", d:"Përcjellësi kryesor në rrjetet elektrike."},
+    {n:30, s:"Zn", e:"Zink", m:"65.38", ox:"+2", en:"1.65", c:12, r:4, cat:"kalimtare", d:"Përdoret për galvanizim dhe në suplemente mjekësore."},
+    {n:31, s:"Ga", e:"Galium", m:"69.72", ox:"+3", en:"1.81", c:13, r:4, cat:"pas-kalimtare", d:"Përdoret në termometra dhe gjysmëpërcjellës."},
+    {n:32, s:"Ge", e:"Germanium", m:"72.63", ox:"+4", en:"2.01", c:14, r:4, cat:"metaloid", d:"Përdoret në thjerrëzat e infra-të-kuqes."},
+    {n:33, s:"As", e:"Arsenik", m:"74.92", ox:"+3, +5, -3", en:"2.18", c:15, r:4, cat:"metaloid", d:"I famshëm për vetitë toksike, përdoret në elektronikë."},
+    {n:34, s:"Se", e:"Selen", m:"78.97", ox:"+4, +6, -2", en:"2.55", c:16, r:4, cat:"jometal", d:"Ndihmon në proceset antioksiduese të trupit."},
+    {n:35, s:"Br", e:"Brom", m:"79.90", ox:"+5, +1, -1", en:"2.96", c:17, r:4, cat:"halogjen", d:"Përdoret në barna dhe si retardant zjarri."},
+    {n:36, s:"Kr", e:"Kripton", m:"83.80", ox:"0", en:"3.00", c:18, r:4, cat:"fisnike", d:"Gaz që përdoret në lazer dhe ndriçim profesional."},
+    {n:37, s:"Rb", e:"Rubidium", m:"85.47", ox:"+1", en:"0.82", c:1, r:5, cat:"alkaline", d:"Digjet spontanisht në ajër."},
+    {n:38, s:"Sr", e:"Stroncium", m:"87.62", ox:"+2", en:"0.95", c:2, r:5, cat:"alkalino-tokesore", d:"Përdoret në fishekzjarrë për ngjyrën e kuqe."},
+    {n:39, s:"Y", e:"Itrium", m:"88.91", ox:"+3", en:"1.22", c:3, r:5, cat:"kalimtare", d:"Përdoret në ekranet CRT dhe në lazer."},
+    {n:40, s:"Zr", e:"Zirkonium", m:"91.22", ox:"+4", en:"1.33", c:4, r:5, cat:"kalimtare", d:"Rezistent i lartë ndaj temperaturave."},
+    {n:41, s:"Nb", e:"Niobium", m:"92.91", ox:"+5, +3", en:"1.6", c:5, r:5, cat:"kalimtare", d:"Përdoret në superpërcjellës të fuqishëm."},
+    {n:42, s:"Mo", e:"Molibden", m:"95.95", ox:"+6", en:"2.16", c:6, r:5, cat:"kalimtare", d:"Rrit pikën e shkrirjes së çeliqeve."},
+    {n:43, s:"Tc", e:"Teknecium", m:"98", ox:"+7", en:"1.9", c:7, r:5, cat:"kalimtare", d:"Element radioaktiv artificial për mjekësi."},
+    {n:44, s:"Ru", e:"Rutenium", m:"101.1", ox:"+3", en:"2.2", c:8, r:5, cat:"kalimtare", d:"Përdoret në solar dhe katalizë."},
+    {n:45, s:"Rh", e:"Rodium", m:"102.9", ox:"+3", en:"2.28", c:9, r:5, cat:"kalimtare", d:"Ruan shkëlqimin, përdoret në argjendari."},
+    {n:46, s:"Pd", palladium:"106.4", ox:"+2, +4", en:"2.20", c:10, r:5, cat:"kalimtare", d:"Përdoret në pastrimin e emetimeve të makinave."},
+    {n:47, s:"Ag", e:"Argjend", m:"107.9", ox:"+1", en:"1.93", c:11, r:5, cat:"kalimtare", d:"Përcjellësi më i mirë termik dhe elektrik."},
+    {n:48, s:"Cd", e:"Kadmium", m:"112.4", ox:"+2", en:"1.69", c:12, r:5, cat:"kalimtare", d:"Përdoret në veshje metalike mbrojtëse."},
+    {n:49, s:"In", e:"Indium", m:"114.8", ox:"+3", en:"1.78", c:13, r:5, cat:"pas-kalimtare", d:"Përdoret në LCD dhe panele solare."},
+    {n:50, s:"Sn", e:"Kallaj", m:"118.7", ox:"+4, +2", en:"1.96", c:14, r:5, cat:"pas-kalimtare", d:"Përdoret për të veshur kanoçet e ushqimit."},
+    {n:51, s:"Sb", e:"Antimon", m:"121.8", ox:"+3, +5", en:"2.05", c:15, r:5, cat:"metaloid", d:"Përdoret në bateritë e plumbit."},
+    {n:52, s:"Te", e:"Telur", m:"127.6", ox:"+4, +6", en:"2.1", c:16, r:5, cat:"metaloid", d:"Një nga metaloidet më të rrallë."},
+    {n:53, s:"I", e:"Jod", m:"126.9", ox:"+7, +5, -1", en:"2.66", c:17, r:5, cat:"halogjen", d:"I rëndësishëm për sintezën e hormoneve."},
+    {n:54, s:"Xe", e:"Ksenon", m:"131.3", ox:"0", en:"2.6", c:18, r:5, cat:"fisnike", d:"Gaz i rëndë që përdoret në anijet kozmike."},
+    {n:55, s:"Cs", e:"Cezium", m:"132.9", ox:"+1", en:"0.79", c:1, r:6, cat:"alkaline", d:"Përdoret për të përcaktuar sekondën atomike."},
+    {n:56, s:"Ba", e:"Barium", m:"137.3", ox:"+2", en:"0.89", c:2, r:6, cat:"alkalino-tokesore", d:"Përdoret në balatën e shpimit të naftës."},
+    {n:57, s:"La", e:"Lantan", m:"138.9", ox:"+3", en:"1.1", c:3, r:9, cat:"lantanid", d:"I jep qelqit veti të larta për thjerrëza."},
+    {n:58, s:"Ce", e:"Cerium", m:"140.1", ox:"+3, +4", en:"1.12", c:4, r:9, cat:"lantanid", d:"Përdoret në gurët e çakmakëve."},
+    {n:59, s:"Pr", e:"Prazeodim", m:"140.9", ox:"+3", en:"1.13", c:5, r:9, cat:"lantanid", d:"Përdoret për syze mbrojtëse saldimi."},
+    {n:60, s:"Nd", e:"Neodim", m:"144.2", ox:"+3", en:"1.14", c:6, r:9, cat:"lantanid", d:"Përbërës i magneteve më të fuqishëm."},
+    {n:61, s:"Pm", e:"Prometium", m:"145", ox:"+3", en:"-", c:7, r:9, cat:"lantanid", d:"Nuk gjendet natyralisht në Tokë."},
+    {n:62, s:"Sm", e:"Samarium", m:"150.4", ox:"+3, +2", en:"1.17", c:8, r:9, cat:"lantanid", d:"Rezistent ndaj demagnetizimit në nxehtësi."},
+    {n:63, s:"Eu", e:"Europium", m:"152.0", ox:"+3, +2", en:"-", c:9, r:9, cat:"lantanid", d:"Elementi më reaktiv i lantanideve."},
+    {n:64, s:"Gd", e:"Gadolinium", m:"157.3", ox:"+3", en:"1.2", c:10, r:9, cat:"lantanid", d:"Agjent kontrasti në radiologji."},
+    {n:65, s:"Tb", e:"Terbium", m:"158.9", ox:"+3", en:"-", c:11, r:9, cat:"lantanid", d:"Përdoret në sensorë dhe sonarë."},
+    {n:66, s:"Dy", e:"Diprozium", m:"162.5", ox:"+3", en:"1.22", c:12, r:9, cat:"lantanid", d:"I rëndësishëm për reaktorët bërthamorë."},
+    {n:67, s:"Ho", e:"Holmium", m:"164.9", ox:"+3", en:"1.23", c:13, r:9, cat:"lantanid", d:"Përdoret në lazer mjekësorë."},
+    {n:68, s:"Er", e:"Erbium", m:"167.3", ox:"+3", en:"1.24", c:14, r:9, cat:"lantanid", d:"Përdoret për përforcimin e sinjalit fibër optike."},
+    {n:69, s:"Tm", e:"Tulium", m:"168.9", ox:"+3", en:"1.25", c:15, r:9, cat:"lantanid", d:"Përdoret në aparatet portative X-ray."},
+    {n:70, s:"Yb", e:"Iterbium", m:"173.1", ox:"+3, +2", en:"-", c:16, r:9, cat:"lantanid", d:"Përdoret në orët atomike më të sakta."},
+    {n:71, s:"Lu", e:"Lutecium", m:"175.0", ox:"+3", en:"1.27", c:17, r:9, cat:"lantanid", d:"Më i denduri nga tokat e rralla."},
+    {n:72, s:"Hf", e:"Hafnium", m:"178.5", ox:"+4", en:"1.3", c:4, r:6, cat:"kalimtare", d:"Thith neutrone në reaktorët bërthamorë."},
+    {n:73, s:"Ta", e:"Tantal", m:"180.9", ox:"+5", en:"1.5", c:5, r:6, cat:"kalimtare", d:"Përdoret në telefonat inteligjentë."},
+    {n:74, s:"W", e:"Volfram", m:"183.8", ox:"+6", en:"2.36", c:6, r:6, cat:"kalimtare", d:"Përdoret për mjetet prerëse të shpejtësisë së lartë."},
+    {n:75, s:"Re", e:"Renium", m:"186.2", ox:"+7, +4", en:"1.9", c:7, r:6, cat:"kalimtare", d:"Përdoret në super-lidhjet e motorëve reaktivë."},
+    {n:76, s:"Os", e:"Osmium", m:"190.2", ox:"+4, +8", en:"2.2", c:8, r:6, cat:"kalimtare", d:"Oksidi i tij është shumë toksik por dobishëm."},
+    {n:77, s:"Ir", e:"Iridium", m:"192.2", ox:"+4, +3", en:"2.20", c:9, r:6, cat:"kalimtare", d:"Elementi me rezistencën më të lartë ndaj gërryerjes."},
+    {n:78, s:"Pt", e:"Platin", m:"195.1", ox:"+4, +2", en:"2.28", c:10, r:6, cat:"kalimtare", d:"Përdoret në kimioterapi dhe bizhuteri."},
+    {n:79, s:"Au", e:"Ar", m:"197.0", ox:"+3, +1", en:"2.54", c:11, r:6, cat:"kalimtare", d:"Metali më i lakueshëm dhe i qëndrueshëm."},
+    {n:80, s:"Hg", e:"Zhivë", m:"200.6", ox:"+2, +1", en:"2.00", c:12, r:6, cat:"kalimtare", d:"Eksploziv në formë fulminati, toksik si avull."},
+    {n:81, s:"Tl", e:"Talium", m:"204.4", ox:"+1, +3", en:"1.62", c:13, r:6, cat:"pas-kalimtare", d:"Përdorej si helm miu në të kaluarën."},
+    {n:82, s:"Pb", e:"Plumb", m:"207.2", ox:"+2, +4", en:"2.33", c:14, r:6, cat:"pas-kalimtare", d:"I dëmshëm për sistemin nervor, mbron nga rrezet X."},
+    {n:83, s:"Bi", e:"Bismut", m:"209.0", ox:"+3, +5", en:"2.02", c:15, r:6, cat:"pas-kalimtare", d:"I vetmi metal i rëndë pothuajse jo-toksik."},
+    {n:84, s:"Po", e:"Polonium", m:"209", ox:"+4, +2", en:"2.0", c:16, r:6, cat:"metaloid", d:"Lëshon nxehtësi nga rrezatimi alfa."},
+    {n:85, s:"At", e:"Astatin", m:"210", ox:"-1, +1", en:"2.2", c:17, r:6, cat:"halogjen", d:"Gjysmëjeta e tij matet në orë."},
+    {n:86, s:"Rn", e:"Radon", m:"222", ox:"0", en:"-", c:18, r:6, cat:"fisnike", d:"Shkak i kancerit të mushkërive në zona të mbyllura."},
+    {n:87, s:"Fr", e:"Francium", m:"223", ox:"+1", en:"0.7", c:1, r:7, cat:"alkaline", d:"Më pak se 30 gram ekzistojnë në Tokë në një kohë."},
+    {n:88, s:"Ra", e:"Radium", m:"226", ox:"+2", en:"0.9", c:2, r:7, cat:"alkalino-tokesore", d:"Përdorej në orët që ndriçonin në errësirë."},
+    {n:89, s:"Ac", e:"Aktinium", m:"227", ox:"+3", en:"1.1", c:3, r:10, cat:"aktinid", d:"Radioaktivitet ekstrem, 150 herë më shumë se uraniumi."},
+    {n:90, s:"Th", e:"Torium", m:"232.0", ox:"+4", en:"1.3", c:4, r:10, cat:"aktinid", d:"Më i bollshëm se uraniumi, potencial bërthamor."},
+    {n:91, s:"Pa", e:"Protaktinium", m:"231.0", ox:"+5", en:"1.5", c:5, r:10, cat:"aktinid", d:"I rrallë, krijohet nga dekompozimi i uraniumit."},
+    {n:92, s:"U", e:"Uran", m:"238.0", ox:"+6", en:"1.38", c:6, r:10, cat:"aktinid", d:"Lëndë djegëse kryesore për energjinë atomike."},
+    {n:93, s:"Np", e:"Neptunium", m:"237", ox:"+5", en:"1.36", c:7, r:10, cat:"aktinid", d:"Nënprodukt i reaktorit, metal argjendi."},
+    {n:94, s:"Pu", e:"Plutonium", m:"244", ox:"+4, +6", en:"1.28", c:8, r:10, cat:"aktinid", d:"Përdoret në termocentralet e hapësirës."},
+    {n:95, s:"Am", e:"Americium", m:"243", ox:"+3, +4", en:"1.3", c:9, r:10, cat:"aktinid", d:"Elementi i vetëm që gjendet në pajisjet shtëpiake."},
+    {n:96, s:"Cm", e:"Curium", m:"247", ox:"+3", en:"1.3", c:10, r:10, cat:"aktinid", d:"Dritë e fortë fluoreshente nga radioaktiviteti."},
+    {n:97, s:"Bk", e:"Berkelium", m:"247", ox:"+3, +4", en:"1.3", c:11, r:10, cat:"aktinid", d:"Zbuluar pas Luftës së Dytë Botërore."},
+    {n:98, s:"Cf", e:"Kalifornium", m:"251", ox:"+3", en:"1.3", c:12, r:10, cat:"aktinid", d:"Përdoret për të nisur reaktorët bërthamorë."},
+    {n:99, s:"Es", e:"Einsteinium", m:"252", ox:"+3", en:"1.3", c:13, r:10, cat:"aktinid", d:"Zbuluar nga mbetjet e bombës së parë hidrogjenore."},
+    {n:100, s:"Fm", e:"Fermium", m:"257", ox:"+3", en:"1.3", c:14, r:10, cat:"aktinid", d:"Vetëm sasi mikroskopike janë prodhuar deri tani."},
+    {n:101, s:"Md", e:"Mendelevium", m:"258", ox:"+3, +2", en:"1.3", c:15, r:10, cat:"aktinid", d:"Emërtuar për nder të krijuesit të tabelës."},
+    {n:102, s:"No", e:"Nobelium", m:"259", ox:"+2, +3", en:"1.3", c:16, r:10, cat:"aktinid", d:"Jetëshkurtër, prodhuar në akseleratorë partikularë."},
+    {n:103, s:"Lr", e:"Lawrencium", m:"262", ox:"+3", en:"-", c:17, r:10, cat:"aktinid", d:"Sillet ngjashëm me lantanidet e rënda."},
+    {n:104, s:"Rf", e:"Raderfordium", m:"267", ox:"+4", en:"-", c:4, r:7, cat:"kalimtare", d:"Metali i parë super i rëndë trans-aktinid."},
+    {n:105, s:"Db", e:"Dubnium", m:"270", ox:"-", en:"-", c:5, r:7, cat:"kalimtare", d:"Krijuar nga bombardimi i kaliforniumit."},
+    {n:106, s:"Sg", e:"Siborgium", m:"271", ox:"-", en:"-", c:6, r:7, cat:"kalimtare", d:"Emërtuar sipas Glenn Seaborg."},
+    {n:107, s:"Bh", e:"Borium", m:"270", ox:"-", en:"-", c:7, r:7, cat:"kalimtare", d:"Veti kimike të ngjashme me Reniumin."},
+    {n:108, s:"Hs", e:"Hasium", m:"277", ox:"-", en:"-", c:8, r:7, cat:"kalimtare", d:"Oksidi i tij mendohet se është i paqëndrueshëm."},
+    {n:109, s:"Mt", e:"Meitnerium", m:"278", ox:"-", en:"-", c:9, r:7, cat:"kalimtare", d:"Emërtuar sipas fizikantes Lise Meitner."},
+    {n:110, s:"Ds", e:"Darmstadtium", m:"281", ox:"-", en:"-", c:10, r:7, cat:"kalimtare", d:"Nuk ka asnjë izotop stabil."},
+    {n:111, s:"Rg", e:"Rentgenium", m:"282", ox:"-", en:"-", c:11, r:7, cat:"kalimtare", d:"Mendohet të jetë metal i rëndë, i ngurtë."},
+    {n:112, s:"Cn", e:"Kopernikium", m:"285", ox:"-", en:"-", c:12, r:7, cat:"kalimtare", d:"Mendohet të jetë gaz në temperaturë dhome."},
+    {n:113, s:"Nh", e:"Nihonium", m:"286", ox:"-", en:"-", c:13, r:7, cat:"pas-kalimtare", d:"Emri vjen nga 'Nihon' (Japoni)."},
+    {n:114, s:"Fl", e:"Flerovium", m:"289", ox:"-", en:"-", c:14, r:7, cat:"pas-kalimtare", d:"Përpjekje për të gjetur 'ishullin e stabilitetit'."},
+    {n:115, s:"Mc", e:"Moskovium", m:"290", ox:"-", en:"-", c:15, r:7, cat:"pas-kalimtare", d:"Vetëm rreth 100 atome janë vëzhguar."},
+    {n:116, s:"Lv", e:"Livermorium", m:"293", ox:"-", en:"-", c:16, r:7, cat:"pas-kalimtare", d:"Element sintetik jetëshkurtër."},
+    {n:117, s:"Ts", e:"Tenesi", m:"294", ox:"-", en:"-", c:17, r:7, cat:"halogjen", d:"Sinteza e tij kërkonte shënjestra të rralla."},
+    {n:118, s:"Og", e:"Oganeson", m:"294", ox:"0", en:"-", c:18, r:7, cat:"fisnike", d:"Mbyll rreshtin e shtatë të tabelës periodike."}
+];
+
+const grid = document.getElementById('pt');
+elements.forEach(item => {
+    const el = document.createElement('div');
+    el.className = `element ${item.cat}`;
+    el.style.gridColumn = item.c;
+    el.style.gridRow = item.r;
+    el.innerHTML = `<div class="n">${item.n}</div><div class="s">${item.s}</div><div class="e">${item.e}</div>`;
+    el.onclick = () => {
+        document.getElementById('m-name').innerText = item.e;
+        document.getElementById('m-sym').innerText = item.s;
+        document.getElementById('m-mass').innerText = item.m;
+        document.getElementById('m-ox').innerText = item.ox;
+        document.getElementById('m-en').innerText = item.en;
+        document.getElementById('m-desc').innerText = item.d;
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('info-box').style.display = 'block';
+    };
+    grid.appendChild(el);
+});
+
+function closeBox() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('info-box').style.display = 'none';
+}
+</script>
+</body>
+</html>
